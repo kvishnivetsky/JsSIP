@@ -15297,6 +15297,8 @@ function receiveInviteResponse(response) {
 
     case /^2[0-9]{2}$/.test(response.status_code):
       this.status = C.STATUS_CONFIRMED;
+      // ACK this status code for not be flooded by UAS replays
+      sendRequest.call(self, JsSIP_C.ACK);
 
       if(!response.body) {
         acceptAndTerminate.call(this, response, 400, JsSIP_C.causes.MISSING_SDP);
@@ -15309,9 +15311,6 @@ function receiveInviteResponse(response) {
         break;
       }
 
-      sendRequest.call(self, JsSIP_C.ACK);
-      confirmed.call(self, 'local', null);
-
       this.connection.setRemoteDescription(
         new rtcninja.RTCSessionDescription({type:'answer', sdp:response.body}),
         // success
@@ -15319,6 +15318,7 @@ function receiveInviteResponse(response) {
           accepted.call(self, 'remote', response);
           // Handle Session Timers.
           handleSessionTimersInIncomingResponse.call(self, response);
+          confirmed.call(self, 'local', null);
         },
         // failure
         function() {
